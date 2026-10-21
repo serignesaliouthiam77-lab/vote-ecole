@@ -1,0 +1,81 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#155eef">
+  <meta name="description" content="VoteÉcole — Ta voix, ton choix">
+  <title>VoteÉcole</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./">
+      <span class="brand-icon">✓</span>
+      VoteÉcole
+    </a>
+    <span class="tagline">Ta voix, ton choix</span>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">ÉLECTIONS SCOLAIRES</p>
+      <h1>Chaque voix compte.</h1>
+      <p>Vote pour tes représentants, simplement depuis ton téléphone.</p>
+    </section>
+
+    <section class="panel" id="auth-panel">
+      <h2>Se connecter</h2>
+      <p class="muted">Connecte-toi pour accéder aux élections.</p>
+
+      <form id="auth-form">
+        <label for="email">Adresse e-mail</label>
+        <input id="email" type="email" placeholder="eleve@exemple.com" required>
+
+        <label for="password">Mot de passe</label>
+        <input id="password" type="password" minlength="6" required>
+
+        <div class="actions">
+          <button type="submit" id="login-btn">Se connecter</button>
+          <button type="button" class="secondary" id="signup-btn">
+            Créer un compte
+          </button>
+        </div>
+      </form>
+      <p id="auth-message" class="message" role="status"></p>
+    </section>
+
+    <section class="panel hidden" id="account-panel">
+      <h2>Bienvenue 👋</h2>
+      <p id="signed-in-email"></p>
+      <button id="logout-btn" class="secondary">Déconnexion</button>
+    </section>
+
+    <section class="section-heading">
+      <div>
+        <p class="eyebrow">EN CE MOMENT</p>
+        <h2>Les élections</h2>
+      </div>
+      <button id="refresh-btn" class="secondary">Actualiser</button>
+    </section>
+
+    <div id="elections-list" class="elections-list">
+      <div class="empty-state">
+        Connecte-toi pour consulter les élections.
+      </div>
+    </div>
+
+    <p id="app-message" class="message" role="status"></p>
+
+    <footer>
+      <p>VoteÉcole · Projet scolaire gratuit</p>
+      <p>Chaque élève compte. Chaque voix compte.</p>
+    </footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
