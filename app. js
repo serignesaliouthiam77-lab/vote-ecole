@@ -1,0 +1,209 @@
+
+const SUPABASE_URL = "COLLE_ICI_URL_SUPABASE";
+const SUPABASE_KEY = "COLLE_ICI_CLE_PUBLIABLE_SUPABASE";
+
+const authPanel = document.getElementById("auth-panel");
+const accountPanel = document.getElementById("account-panel");
+const authForm = document.getElementById("auth-form");
+const authMessage = document.getElementById("auth-message");
+const appMessage = document.getElementById("app-message");
+const electionsList = document.getElementById("elections-list");
+
+let db = null;
+
+function showMessage(element, message) {
+  element.textContent = message;
+}
+
+function configurationReady() {
+  return SUPABASE_URL.startsWith("https://") &&
+    !SUPABASE_URL.includes("COLLE_ICI") &&
+    SUPABASE_KEY.length > 20 &&
+    !SUPABASE_KEY.includes("COLLE_ICI");
+}
+
+if (configurationReady() && window.supabase) {
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+} else {
+  showMessage(
+    appMessage,
+    "Configuration nécessaire : crée ton projet Supabase et ajoute son URL et sa clé publiable dans app.js."
+  );
+}
+
+async function updateScreen() {
+  if (!db) return;
+
+  const { data: { session } } = await db.auth.getSession();
+
+  if (session) {
+    authPanel.hidden = true;
+    accountPanel.hidden = false;
+    document.getElementById("signed-in-email").textContent =
+      session.user.email || "";
+    await loadElections();
+  } else {
+    authPanel.hidden = false;
+    accountPanel.hidden = true;
+  }
+}
+
+authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!db) {
+    showMessage(authMessage, "Configure d'abord Supabase dans app.js.");
+    return;
+  }
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  const { error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    showMessage(authMessage, error.message);
+  } else {
+    showMessage(authMessage, "Connexion réussie !");
+    await updateScreen();
+  }
+});
+
+document.getElementById("signup-btn").addEventListener("click", async () => {
+  if (!db) {
+    showMessage(authMessage, "Configure d'abord Supabase dans app.js.");
+    return;
+  }
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || password.length < 6) {
+    showMessage(authMessage, "Saisis un e-mail et un mot de passe d'au moins 6 caractères.");
+    return;
+  }
+
+  const { error } = await db.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) {
+    showMessage(authMessage, error.message);
+  } else {
+    showMessage(
+      authMessage,
+      "Compte créé. Vérifie ton e-mail si une confirmation est demandée."
+    );
+  }
+});
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  if (!db) return;
+
+  const { error } = await db.auth.signOut();
+
+  if (error) {
+    showMessage(appMessage, error.message);
+  } else {
+    showMessage(appMessage, "Déconnexion réussie.");
+    await updateScreen();
+  }
+});
+
+document.getElementById("refresh-btn").addEventListener("click", loadElections);
+
+async function loadElections() {
+  if (!db) return;
+
+  electionsList.textContent = "Chargement des élections…";
+
+  const { data, error } = await db
+    .from("elections")
+    .select("id, title, description, status")
+    .order("created_at", { ascending: false });
+
+  electionsList.replaceChildren();
+
+  if (error) {
+    showMessage(
+      appMessage,
+      "Impossible de charger les élections. Vérifie la configuration Supabase et les tables."
+    );
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    electionsList.textContent = "Aucune élection disponible pour le moment.";
+    return;
+  }
+
+  data.forEach((election) => {
+    const card = document.createElement("article");
+    card.className = "election-card";
+
+    const title = document.createElement("h3");
+    title.textContent = election.title;
+
+    const description = document.createElement("p");
+    description.textContent = election.description || "";
+
+    const status = document.createElement("p");
+    status.textContent = "Statut : " + election.status;
+
+    const candidates = document.createElement("div");
+    candidates.textContent = "Chargement des candidats…";
+
+    card.append(title, description, status, candidates);
+    electionsList.appendChild(card);
+
+    loadCandidates(election.id, candidates);
+  });
+}
+
+async function loadCandidates(electionId, container) {
+  const { data, error } = await db
+    .from("candidates")
+    .select("id, name, description")
+    .eq("election_id", electionId)
+    .order("name");
+
+  container.replaceChildren();
+
+  if (error) {
+    container.textContent = "Impossible de charger les candidats.";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.textContent = "Aucun candidat pour cette élection.";
+    return;
+  }
+
+  data.forEach((candidate) => {
+    const item = document.createElement("div");
+    item.className = "candidate-card";
+
+    const name = document.createElement("h4");
+    name.textContent = candidate.name;
+
+    const description = document.createElement("p");
+    description.textContent = candidate.description || "";
+
+    item.append(name, description);
+    container.appendChild(item);
+  });
+}
+
+if (db) {
+  db.auth.onAuthStateChange(() => {
+    updateScreen();
+  });
+  updateScreen();
+}
