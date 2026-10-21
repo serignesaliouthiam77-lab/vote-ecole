@@ -1,0 +1,13 @@
+
+{
+  "name": "VoteÉcole",
+  "short_name": "VoteÉcole",
+  "description": "Application de vote pour les élèves",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f1f5f9",
+  "theme_color": "#123b70"
+}
